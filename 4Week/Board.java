@@ -1,25 +1,29 @@
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedList;
 
-public class Board {
+public final class Board {
     private final int[][] tiles;
     private final int N;
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
     public Board(int[][] tiles){
-        this.tiles = tiles;
         N = tiles.length;
+        this.tiles = new int[N][N];
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                this.tiles[i][j] = tiles[i][j];
+            }
+        }
     }
 
     // string representation of this board
     public String toString(){
         StringBuilder sb = new StringBuilder();
-
+        sb.append(N);
+        sb.append("\n");
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                sb.append(i);
+                sb.append(tiles[i][j]);
                 sb.append(" ");
             }
             sb.replace(sb.length()-1, sb.length(), "\n");
@@ -39,7 +43,7 @@ public class Board {
         int number = 1;
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (tiles[i][j] == 0 || number == 10) continue;
+                if (number == N * N) continue;
                 if (tiles[i][j] != number++) error++;
             }
         }
@@ -52,12 +56,17 @@ public class Board {
         int error = 0;
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                if (tiles[i][j] == 0) continue;
-                if (tiles[i][j] != number++ || number == 10) {
-                    int m = (number-1) / N ;
-                    int n = (number-1) % N ;
-                    error += Math.abs(m - i) + Math.abs(n - j);
+                if (tiles[i][j] == 0){
+                    number++;
+                    continue;
                 }
+                if (tiles[i][j] != number) {
+                    int m = (tiles[i][j]-1) / N ;
+                    int n = (tiles[i][j]-1) % N ;
+                    int manh = Math.abs(m - i) + Math.abs(n - j);
+                    error += manh;
+                }
+                number++;
             }
         }
         return error;
@@ -69,7 +78,7 @@ public class Board {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 if (tiles[i][j] != number++) return false;
-                if (number == 10) number = 0;
+                if (number == N * N) number = 0;
             }
         }
         return true;
@@ -77,15 +86,10 @@ public class Board {
 
     // does this board equal y?
     public boolean equals(Object y){
-        if (getClass() != y.getClass())
+        if (y == null || getClass() != y.getClass())
             return false;
         Board b_y = (Board) y;
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (tiles[i][j] != b_y.tiles[i][j]) return false;
-            }
-        }
-        return true;
+        return Arrays.deepEquals(tiles, b_y.tiles);
     }
 
     // all neighboring boards
@@ -134,10 +138,20 @@ public class Board {
     // a board that is obtained by exchanging any pair of tiles
     public Board twin() {
         int[][] copyTiles = createCopyArray();
-        int temp = copyTiles[0][0];
-        copyTiles[0][0] = copyTiles[0][1];
-        copyTiles[0][1] = temp;
-        return new Board(copyTiles);
+
+        for (int i = 0; i < N; i++) {
+            for (int j = 1; j < N; j++) {
+                if (tiles[i][j] != 0 && tiles[i][j-1] != 0){
+                    int temp = copyTiles[i][j-1];
+                    copyTiles[i][j-1] = copyTiles[i][j];
+                    copyTiles[i][j] = temp;
+                    return new Board(copyTiles);
+                }
+            }
+        }
+
+
+        return new Board(new int[N][N]);
     }
 
     private int[][] createCopyArray(){
